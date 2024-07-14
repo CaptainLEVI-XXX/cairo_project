@@ -3,15 +3,16 @@ use core::starknet::contract_address::ContractAddress;
 #[starknet::interface]
 pub trait IAccess_registrable<TContractState> {
     fn add_owner(ref self: TContractState, new_owner_: ContractAddress);
-    fn remove_owner(ref self: TContractState);
+    fn remove_owner(ref self: TContractState,remove_owner: ContractAddress);
     fn transfer_signature(ref self: TContractState, new_owner_:ContractAddress);
     fn is_owner(self: @TContractState,caller:ContractAddress)->bool;  
     fn required_owners(self: @TContractState)->u256;
     fn admin_of_wallet(self: @TContractState)->ContractAddress;
+    fn total_owners_of_Wallet(self : @TContractState)->u256;
 }
 
 #[starknet::component]
-pub mod Access_registrable_component{
+pub mod Access_registrable{
     use super::IAccess_registrable;
     use starknet::{
         ContractAddress,get_caller_address
@@ -55,9 +56,16 @@ pub mod Access_registrable_component{
         pub new_owner :ContractAddress        
     }
 
+    pub mod Errors {
+        pub const NOT_OWNER: felt252 = 'Caller is not the owner';
+        pub const ALREADY_OWNER: felt252 = 'Caller is Already owner';
+        pub const ZERO_ADDRESS_CALLER: felt252 = 'Caller is the zero address';
 
-    #[embeddable_as(Access_registrable)] 
-    impl AccessRegistrableImpl <TContractState,+HasComponent<TContractState>
+    }
+
+
+    #[embeddable_as(Access_Registrable)] 
+    pub impl AccessRegistrableImpl <TContractState,+HasComponent<TContractState>
     >of super::IAccess_registrable<ComponentState<TContractState>> {
         
         fn add_owner(ref self: ComponentState<TContractState>, new_owner_: ContractAddress){
@@ -69,15 +77,15 @@ pub mod Access_registrable_component{
             self.emit(Event::owner_addition(owner_addition{added_owner: new_owner_}));
 
         } 
-        fn remove_owner(ref self:ComponentState<TContractState>){
+        fn remove_owner(ref self:ComponentState<TContractState>,remove_owner: ContractAddress){
 
             let caller = get_caller_address();
 
-            assert(self.is_owner(caller),'Not the Owner/Admin of contract');
-            self.owners.write(caller,false);
+            self.call_by_admin(caller);
+            self.owners.write(remove_owner,false);
             self.total_owners.write(self.total_owners.read() - 1);
             self.update_required_owners();
-            self.emit(Event::owner_removal(owner_removal{removed_owner: caller}))
+            self.emit(Event::owner_removal(owner_removal{removed_owner: remove_owner}))
 
         }
 
@@ -85,8 +93,8 @@ pub mod Access_registrable_component{
             
             let  caller = get_caller_address();
 
-            assert(self.is_owner(caller),'Not the Owner of contract');
-            assert(self.is_owner(new_owner_) != true,'already owner Of the Wallet');
+            assert(self.is_owner(caller),Errors::NOT_OWNER);
+            assert(self.is_owner(new_owner_) != true,Errors::ALREADY_OWNER);
             self.owners.write(caller,false);
             self.owners.write(new_owner_,true);
 
@@ -108,12 +116,17 @@ pub mod Access_registrable_component{
             self.admin.read()
         }
 
+        fn total_owners_of_Wallet(self : @ComponentState<TContractState>)->u256{
+            self.total_owners.read()
+        }
+
 
     }
 
     #[generate_trait]
-    pub impl Access_registrable_PrivateImpl <TContractState, +HasComponent<TContractState>>
-     of InternalTrait<TContractState>{
+    pub impl Access_registrable_PrivateImpl<
+            TContractState, +HasComponent<TContractState>
+            >of InternalTrait<TContractState>{
 
         fn update_required_owners(ref self: ComponentState<TContractState>){    
             self.number_of_owners_required.write(self.ceil(60 * self.total_owners.read(), 100));
@@ -125,7 +138,7 @@ pub mod Access_registrable_component{
 
         fn _init(ref self: ComponentState<TContractState>, _admin: ContractAddress){
 
-            assert(_admin != Zero::zero(),'Invalid Admin Assignment');
+            assert(_admin != Zero::zero(),Errors::ZERO_ADDRESS_CALLER);
             self.admin.write(_admin);
 
         }
@@ -138,7 +151,5 @@ pub mod Access_registrable_component{
         }
 
     }
-
-
 }
 

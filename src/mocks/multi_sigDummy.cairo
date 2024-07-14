@@ -1,5 +1,5 @@
 use core::starknet::contract_address::ContractAddress;
-use super::access_registry::Access_registrable;
+use cairo_wallet::access_registry::Access_registrable;
 use core::starknet::Store;
 use starknet::ClassHash;
 
@@ -15,7 +15,7 @@ pub struct Transaction{
 }
 
 #[starknet::interface]
-pub trait Imulti_sig<TContractState>{
+pub trait Imulti_sigDummy<TContractState>{
 
     fn upgrade(ref self: TContractState, new_class_hash: ClassHash);
     fn create_tx(ref self: TContractState, to: ContractAddress, value: u256, data:felt252);
@@ -27,10 +27,18 @@ pub trait Imulti_sig<TContractState>{
     fn tx_exist(self: @TContractState, _tx_id:u256)->bool;
     fn tx_executed(self: @TContractState,_tx_id:u256 )->bool;
 
+    fn _add_owner(ref self: TContractState, new_owner_: ContractAddress);
+    fn _remove_owner(ref self: TContractState,_remove_owner: ContractAddress);
+    fn _transfer_signature(ref self: TContractState, new_owner_: ContractAddress);
+    fn _is_owner(self: @TContractState, caller: ContractAddress) -> bool;
+    fn _required_owners(self: @TContractState) -> u256;
+    fn _admin_of_wallet(self: @TContractState) -> ContractAddress;
+    fn _total_owners_of_Wallet(self: @TContractState)->u256;
+
 }
 
 #[starknet::contract]
-pub mod multi_sig{
+pub mod multi_sigDummy{
     use starknet::{
         ContractAddress,get_caller_address
     };
@@ -126,7 +134,7 @@ pub mod multi_sig{
     }
 
     #[abi(embed_v0)]
-    impl multi_sig of super::Imulti_sig<ContractState>{
+    impl multi_sigDummy of super::Imulti_sigDummy<ContractState>{
 
         fn upgrade(ref self: ContractState, new_class_hash: ClassHash) {
             // This function can only be called by the owner
@@ -166,7 +174,7 @@ pub mod multi_sig{
             let caller = get_caller_address();
             assert(self.Access_registrable_storage.is_owner(caller)==true,Errors::NOT_OWNER);
             assert(!self.is_approved_transaction.read((_tx_id,caller)),Errors::TX_ALREADY_APPROVED);
-            assert(self.tx_exist(_tx_id) && self.tx_executed(_tx_id),Errors::TX_NOT_EXIST_OR_ALREADY_EXECUTED);
+            assert(self.tx_exist(_tx_id) && !self.tx_executed(_tx_id),Errors::TX_NOT_EXIST_OR_ALREADY_EXECUTED);
 
             self.is_approved_transaction.write((_tx_id,caller),true);
             let mut transaction : Transaction = self.transactions.read(_tx_id);
@@ -178,7 +186,7 @@ pub mod multi_sig{
             let caller = get_caller_address();
             assert(self.Access_registrable_storage.is_owner(caller)==true,Errors::NOT_OWNER);
             assert(self.is_approved_transaction.read((_tx_id,caller)),Errors::TX_ALREADY_NOT_APPROVED);
-            assert(self.tx_exist(_tx_id) && self.tx_executed(_tx_id),Errors::TX_NOT_EXIST_OR_ALREADY_EXECUTED);
+            assert(self.tx_exist(_tx_id) && !self.tx_executed(_tx_id),Errors::TX_NOT_EXIST_OR_ALREADY_EXECUTED);
 
             self.is_approved_transaction.write((_tx_id,caller),false);
             let mut transaction : Transaction = self.transactions.read(_tx_id);
@@ -220,6 +228,32 @@ pub mod multi_sig{
             }
             false
         }
+        fn _add_owner(ref self: ContractState, new_owner_: ContractAddress) {
+                self.Access_registrable_storage.add_owner(new_owner_)
+        }
+
+            fn _remove_owner(ref self: ContractState,_remove_owner:ContractAddress) {
+                self.Access_registrable_storage.remove_owner(_remove_owner)
+            }
+
+            fn _transfer_signature(ref self: ContractState, new_owner_: ContractAddress) {
+                self.Access_registrable_storage.transfer_signature(new_owner_)
+            }
+
+            fn _is_owner(self: @ContractState, caller: ContractAddress) -> bool {
+                self.Access_registrable_storage.is_owner(caller)
+            }
+
+            fn _required_owners(self: @ContractState) -> u256 {
+                self.Access_registrable_storage.required_owners()
+            }
+
+            fn _admin_of_wallet(self: @ContractState) -> ContractAddress {
+                self.Access_registrable_storage.admin_of_wallet()
+            }
+            fn _total_owners_of_Wallet(self: @ContractState)->u256{
+                self.Access_registrable_storage.total_owners_of_Wallet()
+            }
 
     }
 }

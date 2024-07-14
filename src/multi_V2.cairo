@@ -15,9 +15,11 @@ pub struct Transaction{
 }
 
 #[starknet::interface]
-pub trait Imulti_sig<TContractState>{
+pub trait Imulti_V2<TContractState>{
 
     fn upgrade(ref self: TContractState, new_class_hash: ClassHash);
+
+    fn read_total_tx_id(self:@TContractState)->u256;
     fn create_tx(ref self: TContractState, to: ContractAddress, value: u256, data:felt252);
     fn approve_tx(ref self: TContractState, _tx_id: u256);
     fn re_approve_tx(ref self: TContractState, _tx_id: u256);
@@ -30,9 +32,9 @@ pub trait Imulti_sig<TContractState>{
 }
 
 #[starknet::contract]
-pub mod multi_sig{
+pub mod multi_V2{
     use starknet::{
-        ContractAddress,get_caller_address
+        ContractAddress,get_caller_address,ClassHash
     };
     use super::Access_registrable;
     use super::Transaction;
@@ -40,13 +42,12 @@ pub mod multi_sig{
     use super::Access_registrable::Access_registrable_PrivateImpl;
     use openzeppelin::upgrades::UpgradeableComponent;
     use openzeppelin::upgrades::interface::IUpgradeable;
-    use starknet::ClassHash;
 
     component!(path: Access_registrable, storage: Access_registrable_storage, event : Access_registrable_events);
     component!(path: UpgradeableComponent, storage: upgradeable, event: UpgradeableEvent);
     
     #[abi(embed_v0)]
-    impl Access_Registrable = Access_registrable::Access_Registrable<ContractState>;
+    impl Access_RegistrableImpl = Access_registrable::Access_Registrable<ContractState>;
     /// Upgradeable
     impl UpgradeableInternalImpl = UpgradeableComponent::InternalImpl<ContractState>;
 
@@ -126,13 +127,17 @@ pub mod multi_sig{
     }
 
     #[abi(embed_v0)]
-    impl multi_sig of super::Imulti_sig<ContractState>{
+    impl multi_V2 of super::Imulti_V2<ContractState>{
 
         fn upgrade(ref self: ContractState, new_class_hash: ClassHash) {
             // This function can only be called by the owner
             assert(self.Access_registrable_storage.admin_of_wallet()==get_caller_address(),'Restricted to Admin Only');
             // Replace the class hash upgrading the contract
             self.upgradeable.upgrade(new_class_hash);
+        }
+
+        fn read_total_tx_id(self:@ContractState)->u256{
+            self.tx_id.read()
         }
 
         fn create_tx(ref self: ContractState, to: ContractAddress, value: u256, data:felt252){
