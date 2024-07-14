@@ -172,31 +172,6 @@ mod tests {
         let approved_tx = dispatcher.get_tx_details(0);
         assert(approved_tx.number_of_conformation == 1, 'Should have 1 confirmation');
     }
-
-    // #[test]
-    // #[fuzzer(runs: 50, seed: 42)]
-    // fn fuzz_multiple_approvals(num_approvals: u8) {
-    //     let contract_address = setup();
-    //     let dispatcher = Imulti_sigDispatcher { contract_address };
-
-    //     // Set caller as admin
-    //     start_cheat_caller_address(contract_address, contract_address_const::<1>());
-
-    //     let to = create_address(456);
-    //     dispatcher.create_tx(to, 1000, 1);
-
-    //     let mut i: u8 = 0;
-    //     loop {
-    //         if i >= num_approvals {
-    //             break;
-    //         }
-    //         dispatcher.approve_tx(0);
-    //         i += 1;
-    //     };
-
-    //     let tx_details = dispatcher.get_tx_details(0);
-    //     assert(tx_details.number_of_conformation == num_approvals.into(), 'Invalid number of confirmations');
-    // }
 }
 
 
