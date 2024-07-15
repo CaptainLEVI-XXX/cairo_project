@@ -1,6 +1,5 @@
 #[cfg(test)]
 mod tests {
-    // use cairo_wallet::multi_sig::{Imulti_sig, multi_sig, Imulti_sigDispatcher, Imulti_sigDispatcherTrait};
     use cairo_wallet::mocks::multi_sigDummy::{Imulti_sigDummy, multi_sigDummy, Imulti_sigDummyDispatcher, Imulti_sigDummyDispatcherTrait};
     use starknet::ClassHash;
     use starknet::contract_address::contract_address_const;
@@ -9,8 +8,6 @@ mod tests {
     use snforge_std::{declare, ContractClassTrait, start_cheat_caller_address};
     use core::traits::{Into, TryInto};
     use core::byte_array::ByteArray;
-    // use starknet::deploy_syscall;
-    // use starknet::SyscallResultTrait;
 
     // Helper function to deploy the contract
     fn setup()-> (ContractAddress,ContractAddress) {
@@ -23,24 +20,6 @@ mod tests {
         let (contract_address, _) = contract_class.deploy(@calldata).unwrap();
         (contract_address,admin)
     }
-    // fn deploy_contract() -> (multi_sig::ContractState,ContractAddress) {
-
-    //     let admin: ContractAddress = contract_address_const::<1>();
-
-    //     let mut calldata = ArrayTrait::new();
-    //     admin.serialize(ref calldata);
-    //     let contract = multi_sig::constructor(calldata);
-    //     (contract,admin)
-    // }
-//    fn setup_counter() -> (Imulti_sigDispatcher,ContractAddress) {
-
-//     let admin: ContractAddress = contract_address_const::<1>();
-//     let (address, _) = deploy_syscall(
-//         multi_sig::TEST_CLASS_HASH.try_into().unwrap(), 0, array![admin.into()].span(), false
-//     )
-//         .unwrap_syscall();
-//     (Imulti_sigDispatcher { contract_address: address },admin)
-// }
     
     fn create_address(value: felt252) -> ContractAddress {
     if value == 2 {
@@ -158,7 +137,7 @@ mod tests {
 
         let (dispatcher,contract_address,_admin)= addOwner(owner);
 
-        // Set caller as admin
+        // Set caller as owner
         start_cheat_caller_address(contract_address,owner);
 
         let to = create_address(456);

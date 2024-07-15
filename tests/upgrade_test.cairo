@@ -1,26 +1,26 @@
-// use cairo_wallet::multi_sig::{Imulti_sig, multi_sig, Imulti_sigDispatcher, Imulti_sigDispatcherTrait};
-// use cairo_wallet::multi_V2::{Imulti_V2, multi_V2, Imulti_V2Dispatcher, Imulti_V2DispatcherTrait};
-// use openzeppelin::upgrades::UpgradeableComponent;
-// use starknet::ClassHash;
-// use starknet::ContractAddress;
-// use starknet::class_hash::class_hash_const;
-// use starknet::contract_address_const;
+use cairo_wallet::multi_sig::{Imulti_sig, multi_sig, Imulti_sigDispatcher, Imulti_sigDispatcherTrait};
+use cairo_wallet::multi_V2::{Imulti_V2, multi_V2, Imulti_V2Dispatcher, Imulti_V2DispatcherTrait};
+use openzeppelin::upgrades::UpgradeableComponent;
+use starknet::ClassHash;
+use starknet::ContractAddress;
+use starknet::class_hash::class_hash_const;
+use starknet::contract_address_const;
 
-// const VALUE: felt252 = 123;
+const VALUE: felt252 = 123;
 
 
 
-// fn CLASS_HASH_ZERO() -> ClassHash {
-//     class_hash_const::<0>()
-// }
+fn CLASS_HASH_ZERO() -> ClassHash {
+    class_hash_const::<0>()
+}
 
-// fn V2_CLASS_HASH() -> ClassHash {
-//     multi_V2::TEST_CLASS_HASH.try_into().unwrap()
-// }
+fn V2_CLASS_HASH() -> ClassHash {
+    multi_V2::TEST_CLASS_HASH.try_into().unwrap()
+}
 
-// fn ZERO() -> ContractAddress {
-//     contract_address_const::<0>()
-// }
+fn ZERO() -> ContractAddress {
+    contract_address_const::<0>()
+}
 
 // //
 // // Setup
@@ -41,20 +41,20 @@
 // // upgrade
 // //
 
-// #[test]
-// #[should_panic(expected: ('Class hash cannot be zero', 'ENTRYPOINT_FAILED',))]
-// fn test_upgrade_with_class_hash_zero() {
-//     let v1 = deploy_v1();
-//     v1.upgrade(CLASS_HASH_ZERO());
-// }
+#[test]
+#[should_panic(expected: ('Class hash cannot be zero', 'ENTRYPOINT_FAILED',))]
+fn test_upgrade_with_class_hash_zero() {
+    let v1 = deploy_v1();
+    v1.upgrade(CLASS_HASH_ZERO());
+}
 
-// #[test]
-// fn test_upgraded_event() {
-//     let v1 = deploy_v1();
-//     v1.upgrade(V2_CLASS_HASH());
+#[test]
+fn test_upgraded_event() {
+    let v1 = deploy_v1();
+    v1.upgrade(V2_CLASS_HASH());
 
-//     assert_only_event_upgraded(v1.contract_address, V2_CLASS_HASH());
-// }
+    assert_only_event_upgraded(v1.contract_address, V2_CLASS_HASH());
+}
 
 // #[test]
 // fn test_new_selector_after_upgrade() {
